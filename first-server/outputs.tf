@@ -21,3 +21,9 @@ output "my_app_2" {
   value       = "http://${aws_instance.servidor_2.public_dns}:8080"
   description = "public dns my app in my server"
 }
+
+output "loadbalancer_dns" {
+  value       = "http://${aws_lb.load_balancer_app.dns_name}"
+  description = "public dns my app in my server"
+}
+

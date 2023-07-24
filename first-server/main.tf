@@ -73,10 +73,23 @@ resource "aws_instance" "servidor_2" {
   }
 }
 
+resource "aws_security_group" "firewall_egress" {
+  name   = "firewall_egrees"
+  vpc_id = data.aws_vpc.default.id
+  egress {
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "open port 8080"
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "TCP"
+  }
+}
+
 resource "aws_security_group" "my_security_group" {
   name   = "firewall_ingress"
   vpc_id = data.aws_vpc.default.id
   ingress {
+   // security_groups = [ aws_security_group.my_security_group_load_balancer.id]
     cidr_blocks = ["0.0.0.0/0"]
     description = "open port 8080"
     from_port   = 8080
@@ -88,11 +101,20 @@ resource "aws_security_group" "my_security_group" {
 resource "aws_security_group" "my_security_group_load_balancer" {
   name   = "firewall_ingress_load_balancer"
   vpc_id = data.aws_vpc.default.id
-  ingress {
+
+  egress {
     cidr_blocks = ["0.0.0.0/0"]
     description = "open port 80"
     from_port   = 80
     to_port     = 80
+    protocol    = "TCP"
+  }
+
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "open port 80"
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "TCP"
   }
 }
@@ -129,5 +151,15 @@ resource "aws_lb_target_group_attachment" "attachment_servidor_2" {
   target_group_arn = aws_lb_target_group.load_balancer_target_app.arn
   target_id = aws_instance.servidor_2.id
   port = 8080
+}
+
+resource "aws_lb_listener" "listener" {
+  load_balancer_arn = aws_lb.load_balancer_app.arn
+  port = 80
+  protocol = "HTTP"
+  default_action {
+    target_group_arn = aws_lb_target_group.load_balancer_target_app.arn
+    type = "forward"
+  }
 }
 
